@@ -1,83 +1,41 @@
 package com.example.demo.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.persistence.Id;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import javax.persistence.*;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Author {
 
     @Id
-    private int id = -1;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "author_id")
+    private int id;
+    @Column(name = "author_name")
     private String authorName;
     private String gender;
     @JsonIgnoreProperties(value = "authorSet")
-    private Set<Books> booksSet = new HashSet<Books>(0);
+    @ManyToMany
+    @JoinTable(name = "author_book",
+            joinColumns = @JoinColumn(name = "author_id", referencedColumnName = "author_id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "book_id", referencedColumnName = "book_id", nullable = false))
+    private Set<Book> bookSet = new HashSet<>();
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Column(name = "birth")
     private Date born;
-    private int bookCount;
-
-    public Author() {}
-
-    public Author(String authorName, String gender, Date born) {
-        this.authorName = authorName;
-        this.gender = gender;
-        this.born = born;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getAuthorName() {
-        return authorName;
-    }
-
-    public void setAuthorName(String authorName) {
-        this.authorName = authorName;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public Date getBorn() {
-        return born;
-    }
-
-    public void setBorn(Date born) {
-        this.born = born;
-    }
-
-    public Set<Books> getBooksSet() {
-        return booksSet;
-    }
-
-    public void setBooksSet(Set<Books> booksSet) {
-        bookCount = booksSet.size();
-        this.booksSet = booksSet;
-    }
-
-    public int getBookCount() {
-        return bookCount;
-    }
 
     @Override
     public String toString() {
@@ -87,28 +45,5 @@ public class Author {
                 ", gender='" + gender + '\'' +
                 ", born=" + born +
                 '}';
-    }
-
-    public boolean equalsWithId(Object obj) {
-        if(obj == null) return false;
-        Author a = (Author)obj;
-        return getId() == a.getId() && equals(obj);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if(obj == null) return false;
-        Author a = (Author)obj;
-        try {
-            LocalDate ld1 = Instant.ofEpochMilli(getBorn().getTime())
-                    .atZone(ZoneId.of("UTC"))
-                    .toLocalDate();
-            LocalDate ld2 = a.getBorn().toInstant().atZone(ZoneId.of("UTC")).toLocalDate();
-
-            return getAuthorName().equals(a.getAuthorName()) &&
-                    getGender().equals(a.getGender()) && (ld1.compareTo(ld2) == 0);
-        } catch (NullPointerException e) {
-            return false;
-        }
     }
 }
